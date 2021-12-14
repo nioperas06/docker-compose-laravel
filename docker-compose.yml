@@ -1,0 +1,99 @@
+version: '3'
+
+networks:
+  laravel:
+
+services:
+  nginx:
+    build:
+      context: ./dockerfiles
+      dockerfile: nginx.dockerfile
+    container_name: nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      - postgres
+      - php
+      - mailhog
+      - redis
+    networks:
+      - laravel
+
+  postgres:
+    image: postgres:14
+    container_name: postgres
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+    networks:
+      - laravel
+
+  php:
+    build:
+      context: ./dockerfiles
+      dockerfile: php.dockerfile
+    container_name: php
+    volumes:
+      - ./src:/var/www/html
+    networks:
+      - laravel
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - 6379:6379
+    networks:
+      - laravel
+
+  composer:
+    build:
+      context: ./dockerfiles
+      dockerfile: composer.dockerfile
+    container_name: composer
+    volumes:
+      - ./src:/var/www/html
+    working_dir: /var/www/html
+    networks:
+      - laravel
+
+  npm:
+    image: node:current-alpine
+    container_name: npm
+    volumes:
+      - ./src:/var/www/html
+    entrypoint: ["npm"]
+    working_dir: /var/www/html
+    networks:
+      - laravel
+
+  artisan:
+    build:
+      context: ./dockerfiles
+      dockerfile: php.dockerfile
+    container_name: artisan
+    volumes:
+      - ./src:/var/www/html
+    working_dir: /var/www/html
+    depends_on:
+      - postgres
+    entrypoint: ["php", "/var/www/html/artisan"]
+    networks:
+      - laravel
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog
+    ports:
+      - 1025:1025
+      - 8025:8025
+    networks:
+      - laravel
