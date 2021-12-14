@@ -8,6 +8,7 @@ Spin up the containers by running:
 docker-compose up --build
 ```
 
+Other commands:
 - `docker-compose run --rm composer update`
 - `docker-compose run --rm npm run dev`
 - `docker-compose run --rm artisan migrate`
